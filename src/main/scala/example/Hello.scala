@@ -15,7 +15,7 @@ object Hello extends App {
 
   val spark = SparkSession.builder().appName("first").master("local[*]").getOrCreate()
 
-  val numberOfWrites = 2000
+  val numberOfWrites = 10000
 
   var futures: util.List[Future[Int]] = new util.ArrayList[Future[Int]]()
   val futuresSuccess: AtomicInteger = new AtomicInteger()
@@ -26,13 +26,12 @@ object Hello extends App {
       try {
               val session = spark.newSession()
         val df1 = session.read.csv("D:\\data\\spark_definitive_guide_data\\flight-data\\csv\\2015-summary.csv")
-        df1.write.csv("C:\\temp\\data\\flight_data_" + i + "_" + System.currentTimeMillis())
+        df1.write.csv("D:\\temp\\data\\flight_data_" + i + "_" + System.currentTimeMillis())
       } catch {
-        case e: Exception=> {
+        case e: Exception=>
           futuresFailure.incrementAndGet()
           println("Failed#1: ")
-          e.printStackTrace()
-        }
+          e.printStackTrace
       }
       i
     }
@@ -44,15 +43,13 @@ object Hello extends App {
   while(it.hasNext) {
     val future = it.next()
     future.onComplete {
-      case Success(value) => {
+      case Success(value) =>
         futuresSuccess.incrementAndGet()
-        println(s"Completed Job: ${value}")
-      }
-      case Failure(exception) => {
+        println(s"Completed Job: $value")
+      case Failure(exception) =>
         futuresFailure.incrementAndGet()
         println("Failed#2")
-        exception.printStackTrace()
-      }
+        exception.printStackTrace
     }
   }
 
