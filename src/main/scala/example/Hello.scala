@@ -2,6 +2,8 @@ package example
 
 import org.apache.spark.sql.SparkSession
 
+import java.util
+import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -13,10 +15,11 @@ object Hello extends App {
 
   val spark = SparkSession.builder().appName("first").master("local[*]").getOrCreate()
 
-  val numberOfWrites = 10
+  val numberOfWrites = 2000
 
-  var futuresSuccess: Integer = 0
-  var futuresFailure: Integer = 0
+  var futures: util.List[Future[Int]] = new util.ArrayList[Future[Int]]()
+  val futuresSuccess: AtomicInteger = new AtomicInteger()
+  val futuresFailure: AtomicInteger = new AtomicInteger()
 
   for(i <- 1 to numberOfWrites) {
     val future = Future {
@@ -24,28 +27,36 @@ object Hello extends App {
               val session = spark.newSession()
         val df1 = session.read.csv("D:\\data\\spark_definitive_guide_data\\flight-data\\csv\\2015-summary.csv")
         df1.write.csv("C:\\temp\\data\\flight_data_" + i + "_" + System.currentTimeMillis())
-        true
       } catch {
         case e: Exception=> {
-          futuresFailure += 1
+          futuresFailure.incrementAndGet()
           println("Failed#1: ")
           e.printStackTrace()
-          false
         }
       }
+      i
     }
 
+    futures.add(future)
+  }
+
+  val it = futures.iterator()
+  while(it.hasNext) {
+    val future = it.next()
     future.onComplete {
-      case Success(value) => futuresSuccess += 1
+      case Success(value) => {
+        futuresSuccess.incrementAndGet()
+        println(s"Completed Job: ${value}")
+      }
       case Failure(exception) => {
-        futuresFailure += 1
+        futuresFailure.incrementAndGet()
         println("Failed#2")
         exception.printStackTrace()
       }
     }
   }
 
-  while((futuresSuccess + futuresFailure) < numberOfWrites) {
+  while((futuresSuccess.get() + futuresFailure.get()) < numberOfWrites) {
     println(s"futuresSuccess: $futuresSuccess - futuresFailure: $futuresFailure")
     Thread.sleep(1000)
   }
