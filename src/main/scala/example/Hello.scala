@@ -3,19 +3,20 @@ package example
 import org.apache.spark.sql.SparkSession
 
 import java.util
+import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 object Hello extends App {
-  println("First")
+  println("Started: " + new Date())
 
   System.setProperty("hadoop.home.dir", "D:\\software\\hadoop")
 
   val spark = SparkSession.builder().appName("first").master("local[*]").getOrCreate()
 
-  val numberOfWrites = 10000
+  val numberOfWrites = 100
 
   var futures: util.List[Future[Int]] = new util.ArrayList[Future[Int]]()
   val futuresSuccess: AtomicInteger = new AtomicInteger()
@@ -61,4 +62,6 @@ object Hello extends App {
   println("All writes completed")
 
   spark.close()
+
+  println("Completed: " + new Date())
 }
