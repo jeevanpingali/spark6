@@ -16,7 +16,7 @@ object WithExecutor extends App {
 
   val spark = SparkSession.builder().appName("first").master("local[*]").getOrCreate()
 
-  val numberOfWrites = 1000
+  val numberOfWrites = 10000
 
   var futures: util.List[Future[Int]] = new util.ArrayList[Future[Int]]()
   val futuresSuccess: AtomicInteger = new AtomicInteger()
