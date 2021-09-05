@@ -4,7 +4,7 @@ import org.apache.spark.sql.SparkSession
 
 import java.util.Date
 
-object Hello2 extends App {
+object WithoutExecutor extends App {
   println("Started: " + new Date())
 
   System.setProperty("hadoop.home.dir", "D:\\software\\hadoop")

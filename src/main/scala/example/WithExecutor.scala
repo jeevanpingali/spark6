@@ -9,7 +9,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
-object Hello extends App {
+object WithExecutor extends App {
   println("Started: " + new Date())
 
   System.setProperty("hadoop.home.dir", "D:\\software\\hadoop")
