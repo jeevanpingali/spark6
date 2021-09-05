@@ -11,7 +11,7 @@ object WithoutExecutor extends App {
 
   val spark = SparkSession.builder().appName("first").master("local[*]").getOrCreate()
 
-  val numberOfWrites = 100
+  val numberOfWrites = 1000
 
   for(i <- 1 to numberOfWrites) {
     try {
