@@ -4,8 +4,8 @@ import org.apache.spark.sql.SparkSession
 
 import java.util
 import java.util.Date
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -22,8 +22,7 @@ object WithExecutor extends App {
   val futuresSuccess: AtomicInteger = new AtomicInteger()
   val futuresFailure: AtomicInteger = new AtomicInteger()
 
-  val pool = Executors.newFixedThreadPool(100)
-  val executionContext = ExecutionContext.fromExecutor(pool)
+  val executionContext = ExecutionContext.fromExecutor(new ForkJoinPool((20)))
   for(i <- 1 to numberOfWrites) {
     val future = Future {
       try {
@@ -64,7 +63,6 @@ object WithExecutor extends App {
   println("All writes completed")
 
   spark.close()
-  pool.shutdown()
 
   println("Completed: " + new Date())
 }
