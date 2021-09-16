@@ -22,15 +22,15 @@ object WithExecutor extends App {
   val futuresSuccess: AtomicInteger = new AtomicInteger()
   val futuresFailure: AtomicInteger = new AtomicInteger()
 
-  val executionContext = ExecutionContext.fromExecutor(new ForkJoinPool((20)))
-  for(i <- 1 to numberOfWrites) {
+  val executionContext = ExecutionContext.fromExecutor(new ForkJoinPool(50))
+  for (i <- 1 to numberOfWrites) {
     val future = Future {
       try {
-              val session = spark.newSession()
+        val session = spark.newSession()
         val df1 = session.read.csv("D:\\data\\spark_definitive_guide_data\\flight-data\\csv\\2015-summary.csv")
         df1.write.csv("D:\\temp\\data\\flight_data_" + i + "_" + System.currentTimeMillis())
       } catch {
-        case e: Exception=>
+        case e: Exception =>
           futuresFailure.incrementAndGet()
           println("Failed#1: ")
           e.printStackTrace
@@ -38,11 +38,22 @@ object WithExecutor extends App {
       i
     }(executionContext)
 
+    future.onComplete {
+      case Success(value) =>
+        futuresSuccess.incrementAndGet()
+        println(s"Completed Job: $value")
+      case Failure(exception) =>
+        futuresFailure.incrementAndGet()
+        println("Failed#2")
+        exception.printStackTrace
+    }(executionContext)
+
     futures.add(future)
   }
 
+/*
   val it = futures.iterator()
-  while(it.hasNext) {
+  while (it.hasNext) {
     val future = it.next()
     future.onComplete {
       case Success(value) =>
@@ -54,8 +65,9 @@ object WithExecutor extends App {
         exception.printStackTrace
     }(executionContext)
   }
+*/
 
-  while((futuresSuccess.get() + futuresFailure.get()) < numberOfWrites) {
+  while ((futuresSuccess.get() + futuresFailure.get()) < numberOfWrites) {
     println(s"futuresSuccess: $futuresSuccess - futuresFailure: $futuresFailure")
     Thread.sleep(1000)
   }
