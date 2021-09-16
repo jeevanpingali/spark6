@@ -4,24 +4,26 @@ import org.apache.spark.sql.SparkSession
 
 import java.util
 import java.util.Date
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object WithExecutor extends App {
   println("Started: " + new Date())
 
-  System.setProperty("hadoop.home.dir", "D:\\software\\hadoop")
+  System.setProperty("hadoop.home.dir", "D:\\software\\/hadoop")
 
   val spark = SparkSession.builder().appName("first").master("local[*]").getOrCreate()
 
-  val numberOfWrites = 10000
+  val numberOfWrites = 1000
 
   var futures: util.List[Future[Int]] = new util.ArrayList[Future[Int]]()
   val futuresSuccess: AtomicInteger = new AtomicInteger()
   val futuresFailure: AtomicInteger = new AtomicInteger()
 
+  val pool = Executors.newFixedThreadPool(100)
+  val executionContext = ExecutionContext.fromExecutor(pool)
   for(i <- 1 to numberOfWrites) {
     val future = Future {
       try {
@@ -35,7 +37,7 @@ object WithExecutor extends App {
           e.printStackTrace
       }
       i
-    }
+    }(executionContext)
 
     futures.add(future)
   }
@@ -51,7 +53,7 @@ object WithExecutor extends App {
         futuresFailure.incrementAndGet()
         println("Failed#2")
         exception.printStackTrace
-    }
+    }(executionContext)
   }
 
   while((futuresSuccess.get() + futuresFailure.get()) < numberOfWrites) {
@@ -62,6 +64,7 @@ object WithExecutor extends App {
   println("All writes completed")
 
   spark.close()
+  pool.shutdown()
 
   println("Completed: " + new Date())
 }
